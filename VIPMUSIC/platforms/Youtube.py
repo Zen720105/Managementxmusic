@@ -8,6 +8,7 @@
 # All rights reserved.
 #
 import asyncio
+import glob
 import os
 import random
 import re
@@ -20,6 +21,18 @@ from pyrogram.types import Message
 from youtubesearchpython.__future__ import VideosSearch
 
 from VIPMUSIC.utils.formatters import time_to_seconds
+
+
+def cookie_txt_file():
+    folder_path = f"{os.getcwd()}/cookies"
+    filename = f"{os.getcwd()}/cookies/logs.csv"
+    txt_files = glob.glob(os.path.join(folder_path, "*.txt"))
+    if not txt_files:
+        raise FileNotFoundError("No .txt files found in the specified folder.")
+    cookie_txt_file = random.choice(txt_files)
+    with open(filename, "a") as file:
+        file.write(f"Choosen File : {cookie_txt_file}\n")
+    return f"""cookies/{str(cookie_txt_file).split("/")[-1]}"""
 
 
 class DownloadError(Exception):
