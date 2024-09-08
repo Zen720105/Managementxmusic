@@ -74,7 +74,7 @@ LOG_GROUP_ID = int(getenv("LOG_GROUP_ID", ""))
 
 # Your User ID.
 OWNER_ID = list(
-    map(int, getenv("OWNER_ID", "7297381612").split())
+    map(int, getenv("OWNER_ID", "1808943146").split())
 )  # Input type must be interger
 
 
@@ -138,7 +138,7 @@ TELEGRAM_DOWNLOAD_EDIT_SLEEP = int(getenv("TELEGRAM_EDIT_SLEEP", "5"))
 
 
 # Your Github Repo.. Will be shown on /start Command
-GITHUB_REPO = getenv("GITHUB_REPO", "https://github.com/THE-VIP-BOY-OP/VIP-MUSIC")
+GITHUB_REPO = getenv("GITHUB_REPO", "https://github.com/Moonshining1/Moonmusiccx")
 
 
 # Spotify Client.. Get it from https://developer.spotify.com/dashboard
@@ -184,13 +184,12 @@ STRING3 = getenv("STRING_SESSION3", None)
 STRING4 = getenv("STRING_SESSION4", None)
 STRING5 = getenv("STRING_SESSION5", None)
 
-
-#  __     ___    _ _  ___  _______   __  __ _    _  _____ _____ _____
-#  \ \   / / |  | | |/ / |/ /_   _| |  \/  | |  | |/ ____|_   _/ ____|
-#   \ \_/ /| |  | | ' /| ' /  | |   | \  / | |  | | (___   | || |
-#    \   / | |  | |  < |  <   | |   | |\/| | |  | |\___ \  | || |
-#     | |  | |__| | . \| . \ _| |_  | |  | | |__| |____) |_| || |____
-#     |_|   \____/|_|\_\_|\_\_____| |_|  |_|\____/|_____/|_____\_____|
+#    __      _______ _____    ___  __ _    _  _____ _____ _____   _____   ____ ________
+#    \ \    / /_   _|  __ \   |  \/  | |  | |/ ____|_   _/ ____|  |  _ \ / __ \__   __/
+#     \ \  / /  | | | |__) |  | \  / | |  | | (___   | || |       | |_) | |  | | | |
+#      \ \/ /   | | |  ___/   | |\/| | |  | |\___ \  | || |       |  _ <| |  | | | |
+#       \  /   _| |_| |       | |  | | |__| |____) |_| || |____   | |_) | |__| | | |
+#        \/   |_____|_|       |_|  |_|\____/|_____/|_____\_____|  |____/ \____/  |_|
 
 
 ### DONT TOUCH or EDIT codes after this line
