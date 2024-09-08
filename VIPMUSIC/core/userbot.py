@@ -8,6 +8,10 @@
 # All rights reserved.
 #
 
+
+from typing import Callable, Optional
+
+import pyrogram
 from pyrogram import Client
 
 import config
@@ -16,6 +20,7 @@ from ..logging import LOGGER
 
 assistants = []
 assistantids = []
+clients = []
 
 
 class Userbot(Client):
@@ -26,24 +31,28 @@ class Userbot(Client):
             api_hash=config.API_HASH,
             session_string=str(config.STRING1),
         )
+
         self.two = Client(
             "VIPString2",
             api_id=config.API_ID,
             api_hash=config.API_HASH,
             session_string=str(config.STRING2),
         )
+
         self.three = Client(
             "VIPString3",
             api_id=config.API_ID,
             api_hash=config.API_HASH,
             session_string=str(config.STRING3),
         )
+
         self.four = Client(
             "VIPString4",
             api_id=config.API_ID,
             api_hash=config.API_HASH,
             session_string=str(config.STRING4),
         )
+
         self.five = Client(
             "VIPString5",
             api_id=config.API_ID,
@@ -63,6 +72,7 @@ class Userbot(Client):
             except:
                 pass
             assistants.append(1)
+            clients.append(self.one)
             try:
                 await self.one.send_message(config.LOG_GROUP_ID, "Assistant Started")
             except:
@@ -90,6 +100,7 @@ class Userbot(Client):
             except:
                 pass
             assistants.append(2)
+            clients.append(self.two)
             try:
                 await self.two.send_message(config.LOG_GROUP_ID, "Assistant Started")
             except:
@@ -117,6 +128,7 @@ class Userbot(Client):
             except:
                 pass
             assistants.append(3)
+            clients.append(self.three)
             try:
                 await self.three.send_message(config.LOG_GROUP_ID, "Assistant Started")
             except:
@@ -144,6 +156,7 @@ class Userbot(Client):
             except:
                 pass
             assistants.append(4)
+            clients.append(self.four)
             try:
                 await self.four.send_message(config.LOG_GROUP_ID, "Assistant Started")
             except:
@@ -171,6 +184,7 @@ class Userbot(Client):
             except:
                 pass
             assistants.append(5)
+            clients.append(self.five)
             try:
                 await self.five.send_message(config.LOG_GROUP_ID, "Assistant Started")
             except:
@@ -183,8 +197,14 @@ class Userbot(Client):
             self.five.id = get_me.id
             self.five.mention = get_me.mention
             assistantids.append(get_me.id)
-            if get_me.last_name:
-                self.five.name = get_me.first_name + " " + get_me.last_name
-            else:
-                self.five.name = get_me.first_name
-            LOGGER(__name__).info(f"Assistant Five Started as {self.five.name}")
+
+
+def on_cmd(
+    filters: Optional[pyrogram.filters.Filter] = None, group: int = 0
+) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        for client in clients:
+            client.add_handler(pyrogram.handlers.MessageHandler(func, filters), group)
+        return func
+
+    return decorator
