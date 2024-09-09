@@ -1,44 +1,21 @@
-import sqlite3
-from typing import List
+# database.py
+from typing import Dict, List
 
-# Establish connection to the database
-conn = sqlite3.connect("VIPMUSIC.db", check_same_thread=False)
-cursor = conn.cursor()
+# Simulating a database with a dictionary
+LOCKS_DB: Dict[int, List[str]] = {}
 
-# Create the locks table if it doesn't exist
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS locks (
-    chat_id INTEGER NOT NULL,
-    lock_type TEXT NOT NULL,
-    PRIMARY KEY (chat_id, lock_type)
-)
-""")
-conn.commit()
+async def add_lock(chat_id: int, lock_type: str):
+    """Add a lock to a specific chat."""
+    if chat_id not in LOCKS_DB:
+        LOCKS_DB[chat_id] = []
+    if lock_type not in LOCKS_DB[chat_id]:
+        LOCKS_DB[chat_id].append(lock_type)
 
-def add_lock(chat_id: int, lock_type: str):
-    """
-    Adds a lock to the specified chat.
-    """
-    cursor.execute("INSERT OR IGNORE INTO locks (chat_id, lock_type) VALUES (?, ?)", (chat_id, lock_type))
-    conn.commit()
+async def remove_lock(chat_id: int, lock_type: str):
+    """Remove a lock from a specific chat."""
+    if chat_id in LOCKS_DB and lock_type in LOCKS_DB[chat_id]:
+        LOCKS_DB[chat_id].remove(lock_type)
 
-def remove_lock(chat_id: int, lock_type: str):
-    """
-    Removes a lock from the specified chat.
-    """
-    cursor.execute("DELETE FROM locks WHERE chat_id = ? AND lock_type = ?", (chat_id, lock_type))
-    conn.commit()
-
-def is_locked(chat_id: int, lock_type: str) -> bool:
-    """
-    Checks if a specific lock is applied in a chat.
-    """
-    cursor.execute("SELECT 1 FROM locks WHERE chat_id = ? AND lock_type = ? LIMIT 1", (chat_id, lock_type))
-    return cursor.fetchone() is not None
-
-def get_locks(chat_id: int) -> List[str]:
-    """
-    Retrieves all lock types applied in a specific chat.
-    """
-    cursor.execute("SELECT lock_type FROM locks WHERE chat_id = ?", (chat_id,))
-    return [row[0] for row in cursor.fetchall()]
+async def is_locked(chat_id: int, lock_type: str) -> bool:
+    """Check if a specific type of content is locked in a chat."""
+    return chat_id in LOCKS_DB and lock_type in LOCKS_DB[chat_id]
