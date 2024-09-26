@@ -17,7 +17,7 @@ load_dotenv()
 
 # Get it from my.telegram.org
 
-API_ID = getenv("API_ID")
+API_ID = int(getenv("API_ID", ""))
 
 API_HASH = getenv("API_HASH")
 
@@ -74,7 +74,7 @@ LOG_GROUP_ID = int(getenv("LOG_GROUP_ID", ""))
 
 # Your User ID.
 OWNER_ID = list(
-    map(int, getenv("OWNER_ID", "1808943146").split())
+    map(int, getenv("OWNER_ID", "7297381612").split())
 )  # Input type must be interger
 
 
@@ -95,7 +95,7 @@ HEROKU_APP_NAME = getenv("HEROKU_APP_NAME")
 # For customized or modified Repository
 UPSTREAM_REPO = getenv(
     "UPSTREAM_REPO",
-    "https://github.com/Moonshining1/Moonmusiccx",
+    "https://github.com/Moonshining1/Managementxmusic",
 )
 UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "master")
 
@@ -138,7 +138,7 @@ TELEGRAM_DOWNLOAD_EDIT_SLEEP = int(getenv("TELEGRAM_EDIT_SLEEP", "5"))
 
 
 # Your Github Repo.. Will be shown on /start Command
-GITHUB_REPO = getenv("GITHUB_REPO", "https://github.com/Moonshining1/Moonmusiccx")
+GITHUB_REPO = getenv("GITHUB_REPO", "https://github.com/Moonshining1/Managementxmusic")
 
 
 # Spotify Client.. Get it from https://developer.spotify.com/dashboard
