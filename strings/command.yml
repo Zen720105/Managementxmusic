@@ -13,7 +13,6 @@
 # Bot Commands
 PING_COMMAND : ["ping"]
 START_COMMAND : ["start"]
-HELP_COMMAND : ["help"]
 SETTINGS_COMMAND : ["settings", "setting"]
 RELOAD_COMMAND : ["admincache", "reload"]
 GSTATS_COMMAND : ["gstats"]
@@ -52,13 +51,6 @@ SHUFFLE_COMMAND : ["shuffle", "cshuffle"]
 LOOP_COMMAND : ["loop", "cloop"]
 SEEK_COMMAND : ["seek", "cseek", "seekback", "cseekback"]
 REBOOT_COMMAND : ["reboot", "end", "stop"]
-
-# Sudo Users Commaands
-
-# Sudo Command
-ADDSUDO_COMMAND : ["addsudo"]
-DELSUDO_COMMAND : ["delsudo"]
-SUDOUSERS_COMMAND : ["sudolist"]
 
 #Broadcast 
 BROADCAST_COMMAND : ["broadcast", "gcast"]
@@ -99,9 +91,6 @@ AUTHORIZED_COMMAND : ["authorized"]
 BLOCK_COMMAND : ["block"]
 UNBLOCK_COMMAND : ["unblock"]
 BLOCKED_COMMAND : ["blockedusers"]
-
-#sPEEDTEST
-SPEEDTEST_COMMAND : ["speedtest", "spt"]
 
 #Voice chat commands
 ACTIVEVC_COMMAND : ["activevoice","activevc"]
