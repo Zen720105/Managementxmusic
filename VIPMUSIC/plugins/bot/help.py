@@ -143,8 +143,6 @@ async def helper_private(
                 reply_markup=keyboard,
             )
 
-
-@app.on_message(filters.command(HELP_COMMAND) & filters.group & ~BANNED_USERS)
 @LanguageStart
 async def help_com_group(client, message: Message, _):
     keyboard = private_help_panel(_)
