@@ -1,12 +1,3 @@
-#
-# Copyright (C) 2024 by THE-VIP-BOY-OP@Github, < https://github.com/THE-VIP-BOY-OP >.
-#
-# This file is part of < https://github.com/THE-VIP-BOY-OP/VIP-MUSIC > project,
-# and is released under the MIT License.
-# Please see < https://github.com/THE-VIP-BOY-OP/VIP-MUSIC/blob/master/LICENSE >
-#
-# All rights reserved.
-#
 import asyncio
 
 from pyrogram.enums import ChatMemberStatus
@@ -23,6 +14,7 @@ from config import SUPPORT_GROUP as SUPPORT_CHAT
 from config import adminlist
 from strings import get_string
 from VIPMUSIC import YouTube, app
+from VIPMUSIC.core.call import _clear_ as clean
 from VIPMUSIC.misc import SUDOERS
 from VIPMUSIC.utils.database import (
     get_assistant,
@@ -108,6 +100,15 @@ def PlayWrapper(command):
         else:
             chat_id = message.chat.id
             channel = None
+        try:
+            is_call_active = (await app.get_chat(chat_id)).is_call_active
+            if not is_call_active:
+                return await message.reply_text(
+                    f"**» ɴᴏ ᴀᴄᴛɪᴠᴇ ᴠɪᴅᴇᴏᴄʜᴀᴛ ғᴏᴜɴᴅ.**\n\nᴩʟᴇᴀsᴇ ᴍᴀᴋᴇ sᴜʀᴇ ʏᴏᴜ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ᴠɪᴅᴇᴏᴄʜᴀᴛ."
+                )
+        except Exception:
+            pass
+
         playmode = await get_playmode(message.chat.id)
         playty = await get_playtype(message.chat.id)
         if playty != "Everyone":
@@ -134,9 +135,10 @@ def PlayWrapper(command):
 
         if not await is_active_chat(chat_id):
             userbot = await get_assistant(message.chat.id)
+            userbot_id = userbot.id
             try:
                 try:
-                    get = await app.get_chat_member(chat_id, userbot.id)
+                    get = await app.get_chat_member(chat_id, userbot_id)
                 except ChatAdminRequired:
                     return await message.reply_text(_["call_1"])
                 if (
@@ -144,10 +146,10 @@ def PlayWrapper(command):
                     or get.status == ChatMemberStatus.RESTRICTED
                 ):
                     try:
-                        await app.unban_chat_member(chat_id, userbot.id)
+                        await app.unban_chat_member(chat_id, userbot_id)
                     except:
                         return await message.reply_text(
-                            text=_["call_2"].format(userbot.username, userbot.id),
+                            text=_["call_2"].format(userbot.username, userbot_id),
                         )
             except UserNotParticipant:
                 if chat_id in links:
@@ -161,7 +163,6 @@ def PlayWrapper(command):
                             pass
                     else:
                         try:
-                            await client.get_chat_member(message.chat.id, "me")
                             invitelink = await client.export_chat_invite_link(
                                 message.chat.id
                             )
@@ -202,6 +203,14 @@ def PlayWrapper(command):
                     await userbot.resolve_peer(chat_id)
                 except:
                     pass
+
+        # Fetch call participants and stop the stream if userbot is not in the call
+        userbot = await get_assistant(message.chat.id)
+        call_participants_id = [
+            member.chat.id async for member in userbot.get_call_members(chat_id)
+        ]
+        if await is_active_chat(chat_id) and userbot.id not in call_participants_id:
+            await clean(chat_id)
 
         return await command(
             client,
