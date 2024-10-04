@@ -67,7 +67,7 @@ async def gen_thumb(videoid):
                     channel = "Unknown Channel"
 
             async with aiohttp.ClientSession() as session:
-                async with session.gen(f"http://img.youtube.com/vi/{videoid}/maxresdefault.jpg") as resp:
+                async with session.get(f"http://img.youtube.com/vi/{videoid}/maxresdefault.jpg") as resp:
                     if resp.status == 200:
                         f = await aiofiles.open(
                             f"cache/thumb{videoid}.jpg", mode="wb"
