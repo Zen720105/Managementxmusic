@@ -30,6 +30,7 @@ tgcrypto
 urllib3
 uvloop
 flask
+numpy
 gunicorn==20.1.0
 git+https://github.com/KurimuzonAkuma/pyrogram@dev
 git+https://github.com/yt-dlp/yt-dlp
