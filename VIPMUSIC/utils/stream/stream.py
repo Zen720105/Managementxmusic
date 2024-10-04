@@ -28,7 +28,7 @@ from VIPMUSIC.utils.inline.play import queue_markup, stream_markup, telegram_mar
 from VIPMUSIC.utils.inline.playlist import close_markup
 from VIPMUSIC.utils.pastebin import VIPbin
 from VIPMUSIC.utils.stream.queue import put_queue, put_queue_index
-from VIPMUSIC.utils.thumbnails import gen_qthumb, gen_thumb
+from VIPMUSIC.utils.thumbnails import get_thumb
 
 
 async def stream(
