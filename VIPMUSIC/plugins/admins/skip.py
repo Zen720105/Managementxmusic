@@ -22,7 +22,7 @@ from VIPMUSIC.utils.database import get_loop
 from VIPMUSIC.utils.decorators import AdminRightsCheck
 from VIPMUSIC.utils.inline.play import stream_markup, telegram_markup
 from VIPMUSIC.utils.stream.autoclear import auto_clean
-from VIPMUSIC.utils.thumbnails import gen_thumb
+from VIPMUSIC.utils.thumbnails import get_thumb
 
 # Commands
 SKIP_COMMAND = get_command("SKIP_COMMAND")
