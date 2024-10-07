@@ -7,13 +7,15 @@
 #
 # All rights reserved.
 import asyncio
+import importlib
 
 from pyrogram import idle
 
 import config
 from config import BANNED_USERS
-from VIPMUSIC import LOGGER, app, userbot
+from VIPMUSIC import HELPABLE, LOGGER, app, userbot
 from VIPMUSIC.core.call import VIP
+from VIPMUSIC.plugins import ALL_MODULES
 from VIPMUSIC.utils.database import get_banned_users, get_gbanned
 
 
@@ -45,6 +47,13 @@ async def init():
         pass
 
     await app.start()
+
+    for all_module in ALL_MODULES:
+        imported_module = importlib.import_module(all_module)
+
+       
+    LOGGER("VIPMUSIC.plugins").info("Successfully Imported All Modules ")
+
     await userbot.start()
     await VIP.start()
     await VIP.decorators()
