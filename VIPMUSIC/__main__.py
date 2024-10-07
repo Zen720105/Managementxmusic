@@ -48,7 +48,8 @@ async def init():
 
     await app.start()
 
-    
+    for all_module in ALL_MODULES:
+        imported_module = importlib.import_module(all_module)
        
     LOGGER("VIPMUSIC.plugins").info("Successfully Imported All Modules ")
 
