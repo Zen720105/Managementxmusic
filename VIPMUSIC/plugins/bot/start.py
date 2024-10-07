@@ -36,8 +36,6 @@ from VIPMUSIC.utils.decorators.language import LanguageStart
 from VIPMUSIC.utils.formatters import get_readable_time
 from VIPMUSIC.utils.functions import MARKDOWN, WELCOMEHELP
 
-from .help import paginate_modules
-
 loop = asyncio.get_running_loop()
 
 
