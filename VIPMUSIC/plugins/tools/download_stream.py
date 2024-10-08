@@ -9,7 +9,8 @@ from youtubesearchpython import SearchVideos
 from yt_dlp import YoutubeDL
 
 from VIPMUSIC import app
-from VIPMUSIC.platforms.Youtube import cookie_txt_file
+from VIPMUSIC.platforms.Youtube import "cookiefile": cookie_txt_file(),  # Current
+
 
 # Define a dictionary to track the last query timestamp for each user
 user_last_CallbackQuery_time = {}
