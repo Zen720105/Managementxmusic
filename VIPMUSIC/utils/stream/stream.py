@@ -9,7 +9,7 @@
 #
 
 import os
-from VIPMUSIC.utils.youtube import cookie_txt_file
+from VIPMUSIC.platforms.youtube import cookie_txt_file
 from random import randint
 from typing import Union
 
