@@ -1,4 +1,4 @@
-`# Netscape HTTP Cookie File
+# Netscape HTTP Cookie File
 # https://curl.haxx.se/rfc/cookie_spec.html
 # This is a generated file! Do not edit.
 
@@ -36,4 +36,3 @@
 .youtube.com TRUE / FALSE 1759919213 SIDCC AKEyXzXD-2K26ivrd69h8yeXqsOdIlSFW2lhXj0QWvWXdw6hXkhXNlQi9PCU5-PvmQ8EOTjk
 .youtube.com TRUE / TRUE 1759919213 __Secure-1PSIDCC AKEyXzUjVSeRd9mO07PJCIk0yPaYzbNVoZEH2uOlV-Av6hdZSgzdbfzFHrh_X3kdlBogki3XPg
 .youtube.com TRUE / TRUE 1759919213 __Secure-3PSIDCC AKEyXzUQxZ-usKCCOeptOu2EcJIEOgMmZ0spB8vw3jx8cqsNwU-KJMhIPjPRXUYhehweBy-6dQ
-`
