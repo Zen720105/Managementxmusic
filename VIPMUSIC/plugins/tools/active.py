@@ -1,188 +1,190 @@
+from typing import List, Optional, Union
+
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
-from unidecode import unidecode
+from pyrogram.errors import ChatAdminRequired
+from pyrogram.raw.functions.channels import GetFullChannel
+from pyrogram.raw.functions.messages import GetFullChat
+from pyrogram.raw.functions.phone import CreateGroupCall, DiscardGroupCall
+from pyrogram.raw.types import InputGroupCall, InputPeerChannel, InputPeerChat
+from pyrogram.types import ChatPrivileges, Message
 
 from VIPMUSIC import app
-from VIPMUSIC.core.call import _st_ as clean
-from VIPMUSIC.misc import SUDOERS
-from VIPMUSIC.utils.database import (
-    get_active_chats,
-    get_active_video_chats,
-    get_assistant,
-    is_active_chat,
-    remove_active_chat,
-    remove_active_video_chat,
-)
+from VIPMUSIC.core.call import VIP
+from VIPMUSIC.utils.database import *
+from VIPMUSIC.utils.database import set_loop
+
+other_filters = filters.group & ~filters.via_bot & ~filters.forwarded
+other_filters2 = filters.private & ~filters.via_bot & ~filters.forwarded
 
 
-async def generate_join_link(chat_id: int):
-    invite_link = await app.export_chat_invite_link(chat_id)
-    return invite_link
+def command(commands: Union[str, List[str]]):
+    return filters.command(commands, "")
 
 
-def ordinal(n):
-    suffix = ["th", "st", "nd", "rd", "th"][min(n % 10, 4)]
-    if 11 <= (n % 100) <= 13:
-        suffix = "th"
-    return str(n) + suffix
+@app.on_message(filters.video_chat_started & filters.group)
+async def brah(_, msg):
+    chat_id = msg.chat.id
+    try:
+        await msg.reply("**😍ᴠɪᴅᴇᴏ ᴄʜᴀᴛ sᴛᴀʀᴛᴇᴅ🥳**")
+        await VIP.st_stream(chat_id)
+        await set_loop(chat_id, 0)
+    except Exception as e:
+        return await msg.reply(f"**Error {e}**")
 
 
-@app.on_message(
-    filters.command(
-        ["activevc", "activevoice"], prefixes=["/", "!", "%", ",", "", ".", "@", "#"]
-    )
-    & SUDOERS
-)
-async def activevc(_, message: Message):
-    mystic = await message.reply_text("» ɢᴇᴛᴛɪɴɢ ᴀᴄᴛɪᴠᴇ ᴠᴏɪᴄᴇ ᴄʜᴀᴛs ʟɪsᴛ...")
-    served_chats = await get_active_chats()
-    text = ""
-    j = 0
-    buttons = []
+################################################
+async def get_group_call(
+    client: Client, message: Message, err_msg: str = ""
+) -> Optional[InputGroupCall]:
+    assistant = await get_assistant(message.chat.id)
+    chat_peer = await assistant.resolve_peer(message.chat.id)
+    if isinstance(chat_peer, (InputPeerChannel, InputPeerChat)):
+        if isinstance(chat_peer, InputPeerChannel):
+            full_chat = (
+                await assistant.invoke(GetFullChannel(channel=chat_peer))
+            ).full_chat
+        elif isinstance(chat_peer, InputPeerChat):
+            full_chat = (
+                await assistant.invoke(GetFullChat(chat_id=chat_peer.chat_id))
+            ).full_chat
+        if full_chat is not None:
+            return full_chat.call
+    await app.send_message(f"No group ᴠᴏɪᴄᴇ ᴄʜᴀᴛ Found** {err_msg}")
+    return False
 
-    # Loop through each active chat and check if the userbot is in the voice chat
-    for x in served_chats:
-        try:
-            userbot = await get_assistant(x)
-            call_participants_id = [
-                member.chat.id async for member in userbot.get_call_members(x)
-            ]
 
-            if await is_active_chat(x) and userbot.id in call_participants_id:
-                chat_info = await app.get_chat(x)
-                title = chat_info.title
-                invite_link = await generate_join_link(x)
-
-                if chat_info.username:
-                    user = chat_info.username
-                    text += f"<b>{j + 1}.</b> <a href=https://t.me/{user}>{unidecode(title).upper()}</a> [<code>{x}</code>]\n"
-                else:
-                    text += f"<b>{j + 1}.</b> {unidecode(title).upper()} [<code>{x}</code>]\n"
-
-                button_text = f"๏ ᴊᴏɪɴ {ordinal(j + 1)} ɢʀᴏᴜᴘ ๏"
-                buttons.append([InlineKeyboardButton(button_text, url=invite_link)])
-                j += 1
-            else:
-                await remove_active_chat(x)
-        except:
-            await remove_active_chat(x)
-            continue
-
-    if not text:
-        await mystic.edit_text(f"» ɴᴏ ᴀᴄᴛɪᴠᴇ ᴠᴏɪᴄᴇ ᴄʜᴀᴛs ᴏɴ {app.mention}.")
-    else:
-        await mystic.edit_text(
-            f"<b>» ʟɪsᴛ ᴏғ ᴄᴜʀʀᴇɴᴛʟʏ ᴀᴄᴛɪᴠᴇ ᴠᴏɪᴄᴇ ᴄʜᴀᴛs :</b>\n\n{text}",
-            reply_markup=InlineKeyboardMarkup(buttons),
-            disable_web_page_preview=True,
+@app.on_message(filters.command(["vcstart", "startvc"], ["/", "!"]))
+async def start_group_call(c: Client, m: Message):
+    chat_id = m.chat.id
+    assistant = await get_assistant(chat_id)
+    ass = await assistant.get_me()
+    assid = ass.id
+    if assistant is None:
+        await app.send_message(chat_id, "ᴇʀʀᴏʀ ᴡɪᴛʜ ᴀꜱꜱɪꜱᴛᴀɴᴛ")
+        return
+    msg = await app.send_message(chat_id, "ꜱᴛᴀʀᴛɪɴɢ ᴛʜᴇ ᴠᴏɪᴄᴇ ᴄʜᴀᴛ..")
+    try:
+        peer = await assistant.resolve_peer(chat_id)
+        await assistant.invoke(
+            CreateGroupCall(
+                peer=InputPeerChannel(
+                    channel_id=peer.channel_id,
+                    access_hash=peer.access_hash,
+                ),
+                random_id=assistant.rnd_id() // 9000000000,
+            )
         )
-
-
-@app.on_message(
-    filters.command(
-        ["activev", "activevideo"], prefixes=["/", "!", "%", ",", "", ".", "@", "#"]
-    )
-    & SUDOERS
-)
-async def activevi_(_, message: Message):
-    mystic = await message.reply_text("» ɢᴇᴛᴛɪɴɢ ᴀᴄᴛɪᴠᴇ ᴠɪᴅᴇᴏ ᴄʜᴀᴛs ʟɪsᴛ...")
-    served_chats = await get_active_video_chats()
-    text = ""
-    j = 0
-    buttons = []
-
-    # Loop through each active video chat and check if the userbot is in the video chat
-    for x in served_chats:
+        await msg.edit_text("ᴠᴏɪᴄᴇ ᴄʜᴀᴛ ꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ⚡️~!")
+    except ChatAdminRequired:
         try:
-            userbot = await get_assistant(x)
-            call_participants_id = [
-                member.chat.id async for member in userbot.get_call_members(x)
-            ]
-
-            if await is_active_chat(x) and userbot.id in call_participants_id:
-                chat_info = await app.get_chat(x)
-                title = chat_info.title
-                invite_link = await generate_join_link(x)
-
-                if chat_info.username:
-                    user = chat_info.username
-                    text += f"<b>{j + 1}.</b> <a href=https://t.me/{user}>{unidecode(title).upper()}</a> [<code>{x}</code>]\n"
-                else:
-                    text += f"<b>{j + 1}.</b> {unidecode(title).upper()} [<code>{x}</code>]\n"
-
-                button_text = f"๏ ᴊᴏɪɴ {ordinal(j + 1)} ɢʀᴏᴜᴘ ๏"
-                buttons.append([InlineKeyboardButton(button_text, url=invite_link)])
-                j += 1
-            else:
-                await remove_active_video_chat(x)
+            await app.promote_chat_member(
+                chat_id,
+                assid,
+                privileges=ChatPrivileges(
+                    can_manage_chat=False,
+                    can_delete_messages=False,
+                    can_manage_video_chats=True,
+                    can_restrict_members=False,
+                    can_change_info=False,
+                    can_invite_users=False,
+                    can_pin_messages=False,
+                    can_promote_members=False,
+                ),
+            )
+            peer = await assistant.resolve_peer(chat_id)
+            await assistant.invoke(
+                CreateGroupCall(
+                    peer=InputPeerChannel(
+                        channel_id=peer.channel_id,
+                        access_hash=peer.access_hash,
+                    ),
+                    random_id=assistant.rnd_id() // 9000000000,
+                )
+            )
+            await app.promote_chat_member(
+                chat_id,
+                assid,
+                privileges=ChatPrivileges(
+                    can_manage_chat=False,
+                    can_delete_messages=False,
+                    can_manage_video_chats=False,
+                    can_restrict_members=False,
+                    can_change_info=False,
+                    can_invite_users=False,
+                    can_pin_messages=False,
+                    can_promote_members=False,
+                ),
+            )
+            await msg.edit_text("ᴠᴏɪᴄᴇ ᴄʜᴀᴛ ꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ⚡️~!")
+            await VIP.st_stream(chat_id)
+            await set_loop(chat_id, 0)
         except:
-            await remove_active_video_chat(x)
-            continue
-
-    if not text:
-        await mystic.edit_text(f"» ɴᴏ ᴀᴄᴛɪᴠᴇ ᴠɪᴅᴇᴏ ᴄʜᴀᴛs ᴏɴ {app.mention}.")
-    else:
-        await mystic.edit_text(
-            f"<b>» ʟɪsᴛ ᴏғ ᴄᴜʀʀᴇɴᴛʟʏ ᴀᴄᴛɪᴠᴇ ᴠɪᴅᴇᴏ ᴄʜᴀᴛs :</b>\n\n{text}",
-            reply_markup=InlineKeyboardMarkup(buttons),
-            disable_web_page_preview=True,
-        )
+            await msg.edit_text("ɢɪᴠᴇ ᴛʜᴇ ʙᴏᴛ ᴀʟʟ ᴘᴇʀᴍɪꜱꜱɪᴏɴꜱ ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ ⚡")
 
 
-@app.on_message(filters.command(["ac"]) & SUDOERS)
-async def start(client: Client, message: Message):
-    active_chats = await get_active_chats()
-    active_video_chats = await get_active_video_chats()
-    ok = await message.reply_text("**ғᴇᴛᴄʜɪɴɢ....**")
-
-    valid_audio_chats = []
-    valid_video_chats = []
-
-    for chat_id in active_chats:
-        userbot = await get_assistant(chat_id)
-        call_participants_id = [
-            member.chat.id async for member in userbot.get_call_members(chat_id)
-        ]
-
-        if await is_active_chat(chat_id) and userbot.id in call_participants_id:
-            valid_audio_chats.append(chat_id)
-        else:
-            await clean(chat_id)
-
-    for chat_id in active_video_chats:
-        userbot = await get_assistant(chat_id)
-        call_participants_id = [
-            member.chat.id async for member in userbot.get_call_members(chat_id)
-        ]
-
-        if await is_active_chat(chat_id) and userbot.id in call_participants_id:
-            valid_video_chats.append(chat_id)
-        else:
-            await clean(chat_id)
-
-    ac_audio = str(len(valid_audio_chats))
-    ac_video = str(len(valid_video_chats))
-
-    await ok.delete()
-    await message.reply_text(
-        f"✫ <b><u>ᴀᴄᴛɪᴠᴇ ᴄʜᴀᴛs ɪɴғᴏ</u></b> :\n\nᴠᴏɪᴄᴇ : {ac_audio}\nᴠɪᴅᴇᴏ  : {ac_video}",
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("✯ ᴄʟᴏsᴇ ✯", callback_data=f"close")]]
-        ),
-    )
-
-
-__MODULE__ = "Aᴄᴛɪᴠᴇ"
-__HELP__ = """
-## Aᴄᴛɪᴠᴇ Vᴏɪᴄᴇ/Vɪᴅᴇᴏ Cʜᴀᴛs Cᴏᴍᴍᴀɴᴅs
-
-/activevc ᴏʀ /activevoice - Lɪsᴛs ᴀᴄᴛɪᴠᴇ ᴠᴏɪᴄᴇ ᴄʜᴀᴛs ɪɴ ᴀ sᴇʀᴠᴇᴅ ɢʀᴏᴜᴘs.
-
-/activev ᴏʀ /activevideo - Lɪsᴛs ᴀᴄᴛɪᴠᴇ ᴠɪᴅᴇᴏ ᴄʜᴀᴛs ɪɴ ᴀ sᴇʀᴠᴇᴅ ɢʀᴏᴜᴘs.
-
-/ac - Dɪsᴘᴀʏs ᴛʜᴇ ᴄᴏᴜɴᴛ ᴏғ ᴀᴄᴛɪᴠᴇ ᴠᴏɪᴄᴇ ᴀɴᴅ ᴠɪᴅᴇᴏ ᴄʜᴀᴛs.
-
-**Nᴏᴛᴇs:**
-- Oɴʏ SUDOERS ᴄᴀɴ ᴜsᴇ ᴛʜᴇsᴇ ᴄᴏᴍᴍᴀɴᴅs.
-- Aᴜᴛᴏᴍᴀᴛɪᴄᴀʏ ɢᴇɴᴇʀᴀᴛᴇs ᴊᴏɪɴ ɪɴᴋs ғᴏʀ ᴀᴄᴛɪᴠᴇ ᴄʜᴀᴛs.
-"""
+@app.on_message(filters.command(["vcend", "endvc"], ["/", "!"]))
+async def stop_group_call(c: Client, m: Message):
+    chat_id = m.chat.id
+    assistant = await get_assistant(chat_id)
+    ass = await assistant.get_me()
+    assid = ass.id
+    if assistant is None:
+        await app.send_message(chat_id, "ᴇʀʀᴏʀ ᴡɪᴛʜ ᴀꜱꜱɪꜱᴛᴀɴᴛ")
+        return
+    msg = await app.send_message(chat_id, "ᴄʟᴏꜱɪɴɢ ᴛʜᴇ ᴠᴏɪᴄᴇ ᴄʜᴀᴛ..")
+    try:
+        if not (
+            group_call := (
+                await get_group_call(
+                    assistant, m, err_msg=", ɢʀᴏᴜᴘ ᴠᴏɪᴄᴇ ᴄʜᴀᴛ ᴀʟʀᴇᴀᴅʏ ᴇɴᴅᴇᴅ"
+                )
+            )
+        ):
+            return
+        await assistant.invoke(DiscardGroupCall(call=group_call))
+        await msg.edit_text("ᴠᴏɪᴄᴇ ᴄʜᴀᴛ ᴄʟᴏꜱᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ⚡️~!")
+    except Exception as e:
+        if "GROUPCALL_FORBIDDEN" in str(e):
+            try:
+                await app.promote_chat_member(
+                    chat_id,
+                    assid,
+                    privileges=ChatPrivileges(
+                        can_manage_chat=False,
+                        can_delete_messages=False,
+                        can_manage_video_chats=True,
+                        can_restrict_members=False,
+                        can_change_info=False,
+                        can_invite_users=False,
+                        can_pin_messages=False,
+                        can_promote_members=False,
+                    ),
+                )
+                if not (
+                    group_call := (
+                        await get_group_call(
+                            assistant, m, err_msg=", ɢʀᴏᴜᴘ ᴠᴏɪᴄᴇ ᴄʜᴀᴛ ᴀʟʀᴇᴀᴅʏ ᴇɴᴅᴇᴅ"
+                        )
+                    )
+                ):
+                    return
+                await assistant.invoke(DiscardGroupCall(call=group_call))
+                await app.promote_chat_member(
+                    chat_id,
+                    assid,
+                    privileges=ChatPrivileges(
+                        can_manage_chat=False,
+                        can_delete_messages=False,
+                        can_manage_video_chats=False,
+                        can_restrict_members=False,
+                        can_change_info=False,
+                        can_invite_users=False,
+                        can_pin_messages=False,
+                        can_promote_members=False,
+                    ),
+                )
+                await msg.edit_text("ᴠᴏɪᴄᴇ ᴄʜᴀᴛ ᴄʟᴏꜱᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ⚡️~!")
+                await VIP.st_stream(chat_id)
+                await set_loop(chat_id, 0)
+            except:
+                await msg.edit_text("ɢɪᴠᴇ ᴛʜᴇ ʙᴏᴛ ᴀʟʟ ᴘᴇʀᴍɪꜱꜱɪᴏɴꜱ ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ")
