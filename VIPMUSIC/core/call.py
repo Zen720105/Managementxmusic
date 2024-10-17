@@ -8,12 +8,13 @@
 # All rights reserved.
 #
 import asyncio
+import os
 from datetime import datetime, timedelta
 from typing import Union
 
 from ntgcalls import TelegramServerError
 from pyrogram import Client
-from pyrogram.enums import ChatMemberStatus
+from pyrogram.enums import ChatMembersFilter, ChatMemberStatus
 from pyrogram.errors import (
     ChatAdminRequired,
     FloodWait,
@@ -54,8 +55,9 @@ from VIPMUSIC.utils.exceptions import AssistantErr
 from VIPMUSIC.utils.formatters import check_duration, seconds_to_min, speed_converter
 from VIPMUSIC.utils.inline.play import stream_markup, telegram_markup
 from VIPMUSIC.utils.stream.autoclear import auto_clean
-from VIPMUSIC.utils.thumbnails import get_thumb
+from VIPMUSIC.utils.thumbnails import gen_thumb
 
+active = []
 autoend = {}
 counter = {}
 AUTO_END_TIME = 1
@@ -68,16 +70,47 @@ async def _st_(chat_id):
 
 
 async def _clear_(chat_id):
+    # Clearing the chat ID data in the database
     db[chat_id] = []
 
-    await remove_active_video_chat(chat_id)
-    await remove_active_chat(chat_id)
+    # Removing active video chat and chat records
+    try:
+        await remove_active_video_chat(chat_id)
+        await remove_active_chat(chat_id)
+    except Exception as e:
+        print(f"Error removing active chats: {e}")
 
-    AMBOT = await app.send_message(
-        chat_id, f"🎶 **ꜱᴏɴɢ ʜᴀꜱ ᴇɴᴅᴇᴅ ɪɴ ᴠᴄ.** ᴅᴏ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ʜᴇᴀʀ ᴍᴏʀᴇ sᴏɴɢs?"
-    )
-    await asyncio.sleep(5)
-    await AMBOT.delete()
+    # Preparing the text for admin mentions
+    text = ""
+
+    try:
+        # Fetching admins from the chat
+        admins = [
+            admin.user.id
+            async for admin in app.get_chat_members(
+                chat_id, filter=ChatMembersFilter.ADMINISTRATORS
+            )
+        ]
+
+        # Looping through each admin to check if they are not a bot or deleted
+        for admin in admins:
+            admin_member = await app.get_chat_member(chat_id, admin)
+            if not admin_member.user.is_bot and not admin_member.user.is_deleted:
+                text += f"[\u2063](tg://user?id={admin})"
+    except Exception as e:
+        await app.send_message(
+            chat_id,
+            f"**ᴄᴏᴜʟᴅ ɪ ɢᴇᴛ ᴀᴅᴍɪɴ ᴀᴄᴄᴇss? ɪᴛ ᴡɪʟʟ ʜᴇʟᴘ ᴋᴇᴇᴘ ᴛʜᴇ sᴏɴɢs ᴘʟᴀʏɪɴɢ ᴍᴏʀᴇ ʀᴇʟɪᴀʙʟʏ. ᴛʜᴀɴᴋs ɪɴ ᴀᴅᴠᴀɴᴄᴇ! 🎵😊{text}**",
+        )
+
+    # Sending the final message
+    try:
+        await app.send_message(
+            chat_id,
+            f"**🎧 ꜱᴏɴɢ ʜᴀꜱ ᴇɴᴅᴇᴅ ɪɴ ᴠᴄ🥺**{text}",
+        )
+    except Exception as e:
+        print(f"Error sending message: {e}")
 
 
 class Call(PyTgCalls):
@@ -152,8 +185,9 @@ class Call(PyTgCalls):
     async def stop_stream(self, chat_id: int):
         assistant = await group_assistant(self, chat_id)
         try:
-            await _clear_(chat_id)
             await assistant.leave_group_call(chat_id)
+            await _clear_(chat_id)
+
         except:
             pass
 
@@ -385,6 +419,7 @@ class Call(PyTgCalls):
         video: Union[bool, str] = None,
         image: Union[bool, str] = None,
     ):
+        await asyncio.sleep(1)
         assistant = await group_assistant(self, chat_id)
         audio_stream_quality = await get_audio_bitrate(chat_id)
         video_stream_quality = await get_video_bitrate(chat_id)
@@ -478,12 +513,13 @@ class Call(PyTgCalls):
             if popped:
                 await auto_clean(popped)
             if not check:
-                await _clear_(chat_id)
-                return await client.leave_group_call(chat_id)
+                await client.leave_group_call(chat_id)
+
+                return await _clear_(chat_id)
         except:
             try:
-                await _clear_(chat_id)
-                return await client.leave_group_call(chat_id)
+                await client.leave_group_call(chat_id)
+                return await _clear_(chat_id)
             except:
                 return
         else:
@@ -537,7 +573,7 @@ class Call(PyTgCalls):
                         original_chat_id,
                         text=_["call_7"],
                     )
-                img = await get_thumb(videoid)
+                img = await gen_thumb(videoid)
                 button = telegram_markup(_, chat_id)
                 run = await app.send_photo(
                     original_chat_id,
@@ -595,7 +631,7 @@ class Call(PyTgCalls):
                         original_chat_id,
                         text=_["call_7"],
                     )
-                img = await get_thumb(videoid)
+                img = await gen_thumb(videoid)
                 button = stream_markup(_, videoid, chat_id)
                 await mystic.delete()
                 run = await app.send_photo(
@@ -702,7 +738,7 @@ class Call(PyTgCalls):
                     db[chat_id][0]["mystic"] = run
                     db[chat_id][0]["markup"] = "tg"
                 else:
-                    img = await get_thumb(videoid)
+                    img = await gen_thumb(videoid)
                     button = stream_markup(_, videoid, chat_id)
                     try:
                         run = await app.send_photo(
@@ -813,4 +849,3 @@ class Call(PyTgCalls):
 
 
 VIP = Call()
-
